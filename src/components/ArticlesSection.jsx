@@ -1,4 +1,5 @@
 /* eslint-disable react/prop-types */
+import { useState } from "react";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { blogPosts } from "../data/blogPosts";
@@ -52,6 +53,7 @@ function BlogCard({ image, category, title, description, author, date }) {
 
 export default function Articles() {
   const categories = ["Highlight", "Cat", "Inspiration", "General"];
+  const [category, setCategory] = useState("Highlight");
   return (
     <div className="w-full max-w-7xl mx-auto md:px-6 lg:px-8 mb-40">
       <h2 className="text-xl font-bold mb-4 px-4">Latest articles</h2>
@@ -67,7 +69,10 @@ export default function Articles() {
           </div>
         </div>
         <div className="md:hidden w-full">
-          <Select value="Highlight">
+          <Select
+            value={category}
+            onValueChange={(value) => setCategory(value)}
+          >
             <SelectTrigger className="w-full py-3 rounded-sm text-muted-foreground focus:ring-0 focus:ring-offset-0 focus:border-muted-foreground">
               <SelectValue placeholder="Select category" />
             </SelectTrigger>
@@ -83,23 +88,17 @@ export default function Articles() {
           </Select>
         </div>
         <div className="hidden md:flex space-x-2">
-          <button
-            className="px-4 py-3 transition-colors rounded-sm text-sm text-muted-foreground font-medium bg-[#DAD6D1]
-            "
-          >
-            Highlight
-          </button>
-          {categories.slice(1).map((cat) => {
-            return (
-              <button
-                key={cat}
-                className="px-4 py-3 transition-colors rounded-sm text-sm text-muted-foreground font-medium hover:bg-muted
-              "
-              >
-                {cat}
-              </button>
-            );
-          })}
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setCategory(cat)}
+              className={`px-4 py-3 transition-colors rounded-sm text-sm text-muted-foreground font-medium ${
+                category === cat ? "bg-[#DAD6D1]" : "hover:bg-muted"
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
         </div>
       </div>
       <article className="grid grid-cols-1 md:grid-cols-2 gap-8 px-4 md:px-0">
