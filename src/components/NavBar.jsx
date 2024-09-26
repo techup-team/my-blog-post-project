@@ -2,7 +2,7 @@ import { Menu } from "lucide-react";
 
 export default function NavBar() {
   return (
-    <nav className="flex items-center justify-between py-4 px-4 sm:px-8 bg-background border-b border-muted">
+    <nav className="flex items-center justify-between py-4 px-4 md:px-8 bg-background border-b border-muted">
       <a href="/" className="text-2xl font-bold">
         Thomson P<span className="text-green-400">.</span>
       </a>
