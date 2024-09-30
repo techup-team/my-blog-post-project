@@ -1,8 +1,8 @@
 /* eslint-disable react/prop-types */
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import axios from "axios";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { blogPosts } from "../data/blogPosts";
 import authorImage from "../assets/author-image.jpeg";
 import {
   Select,
@@ -54,6 +54,23 @@ function BlogCard({ image, category, title, description, author, date }) {
 export default function Articles() {
   const categories = ["Highlight", "Cat", "Inspiration", "General"];
   const [category, setCategory] = useState("Highlight");
+  const [posts, setPosts] = useState([]);
+
+  useEffect(() => {
+    fetchPosts();
+  }, []);
+
+  const fetchPosts = async () => {
+    try {
+      const response = await axios.get(
+        `https://blog-post-project-api.vercel.app/posts`
+      );
+      setPosts(response.data.posts);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   return (
     <div className="w-full max-w-7xl mx-auto md:px-6 lg:px-8 mb-40">
       <h2 className="text-xl font-bold mb-4 px-4">Latest articles</h2>
@@ -102,7 +119,7 @@ export default function Articles() {
         </div>
       </div>
       <article className="grid grid-cols-1 md:grid-cols-2 gap-8 px-4 md:px-0">
-        {blogPosts.map((blog, index) => {
+        {posts.map((blog, index) => {
           return (
             <BlogCard
               key={index}
@@ -111,7 +128,11 @@ export default function Articles() {
               title={blog.title}
               description={blog.description}
               author={blog.author}
-              date={blog.date}
+              date={new Date(blog.date).toLocaleDateString("en-GB", {
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+              })}
             />
           );
         })}
