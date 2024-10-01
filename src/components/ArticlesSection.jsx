@@ -127,6 +127,7 @@ export default function Articles() {
         <div className="hidden md:flex space-x-2">
           {categories.map((cat) => (
             <button
+              disabled={category === cat}
               key={cat}
               onClick={() => {
                 setCategory(cat);
