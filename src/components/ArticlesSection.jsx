@@ -64,7 +64,9 @@ export default function Articles() {
     const fetchPosts = async () => {
       try {
         const response = await axios.get(
-          `https://blog-post-project-api.vercel.app/posts?page=${page}&limit=6&category=${category}`
+          `https://blog-post-project-api.vercel.app/posts?page=${page}&limit=6&${
+            category !== "Highlight" ? `&category=${category}` : ""
+          }`
         );
         setPosts((prevPosts) => [...prevPosts, ...response.data.posts]);
         setIsLoading(false); // Set isLoading to false after fetching
