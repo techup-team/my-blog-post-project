@@ -270,7 +270,7 @@ function AuthorBio() {
 function CreateAccountModal({ dialogState, setDialogState }) {
   return (
     <AlertDialog open={dialogState} onOpenChange={setDialogState}>
-      <AlertDialogContent className="bg-white rounded-md pt-16 pb-6 max-w-[26rem] sm:max-w-lg flex flex-col items-center">
+      <AlertDialogContent className="bg-white rounded-md pt-16 pb-6 max-w-[22rem] sm:max-w-lg flex flex-col items-center">
         <AlertDialogTitle className="text-3xl font-semibold pb-2 text-center">
           Create an account to continue
         </AlertDialogTitle>
