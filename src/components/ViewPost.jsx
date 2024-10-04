@@ -2,18 +2,27 @@
 import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
+import {
   Facebook,
   Linkedin,
   Twitter,
   SmilePlus,
   Copy,
   Loader2,
+  X,
 } from "lucide-react";
 import { comments } from "@/data/comments";
 import { Textarea } from "@/components/ui/textarea";
 import authorImage from "../assets/author-image.jpeg";
 import axios from "axios";
 import { useParams } from "react-router-dom";
+import { toast } from "sonner";
 
 export default function ViewPost() {
   const [img, setImg] = useState("");
@@ -24,6 +33,7 @@ export default function ViewPost() {
   const [content, setContent] = useState("");
   const [likes, setLikes] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const param = useParams();
 
@@ -91,8 +101,8 @@ export default function ViewPost() {
             <AuthorBio />
           </div>
 
-          <Share likesAmount={likes} />
-          <Comment />
+          <Share likesAmount={likes} setDialogState={setIsDialogOpen} />
+          <Comment setDialogState={setIsDialogOpen} />
         </div>
 
         <div className="hidden xl:block xl:w-1/4">
@@ -101,17 +111,23 @@ export default function ViewPost() {
           </div>
         </div>
       </div>
+      <CreateAccountModal
+        dialogState={isDialogOpen}
+        setDialogState={setIsDialogOpen}
+      />
     </div>
   );
 }
 
-function Share({ likesAmount }) {
+function Share({ likesAmount, setDialogState }) {
   const shareLink = encodeURI(window.location.href);
-  console.log(shareLink);
   return (
     <div className="md:px-4">
       <div className="bg-[#EFEEEB] py-4 px-4 md:rounded-sm flex flex-col space-y-4 md:gap-16 md:flex-row md:items-center md:space-y-0 md:justify-between mb-10">
-        <button className="bg-white flex items-center justify-center space-x-2 px-11 py-3 rounded-full text-foreground border border-foreground hover:border-muted-foreground hover:text-muted-foreground transition-colors group">
+        <button
+          onClick={() => setDialogState(true)}
+          className="bg-white flex items-center justify-center space-x-2 px-11 py-3 rounded-full text-foreground border border-foreground hover:border-muted-foreground hover:text-muted-foreground transition-colors group"
+        >
           <SmilePlus className="w-5 h-5 text-foreground group-hover:text-muted-foreground transition-colors" />
           <span className="text-foreground group-hover:text-muted-foreground font-medium transition-colors">
             {likesAmount}
@@ -121,6 +137,22 @@ function Share({ likesAmount }) {
           <button
             onClick={() => {
               navigator.clipboard.writeText(shareLink);
+              toast.custom((t) => (
+                <div className="bg-green-500 text-white p-4 rounded-sm flex justify-between items-start max-w-md w-full">
+                  <div>
+                    <h2 className="font-bold text-lg mb-1">Copied!</h2>
+                    <p className="text-sm">
+                      This article has been copied to your clipboard.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => toast.dismiss(t)}
+                    className="text-white hover:text-gray-200"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+              ));
             }}
             className="bg-white flex flex-1 items-center justify-center space-x-2 px-11 py-3 rounded-full text-foreground border border-foreground hover:border-muted-foreground hover:text-muted-foreground transition-colors group"
           >
@@ -156,13 +188,14 @@ function Share({ likesAmount }) {
   );
 }
 
-function Comment() {
+function Comment({ setDialogState }) {
   return (
     <div>
       <div className="space-y-4 px-4 mb-16">
         <h3 className="text-lg font-semibold">Comment</h3>
         <div className="space-y-2">
           <Textarea
+            onFocus={() => setDialogState(true)}
             placeholder="What are your thoughts?"
             className="w-full p-4 h-24 resize-none py-3 rounded-sm placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-muted-foreground"
           />
@@ -226,11 +259,38 @@ function AuthorBio() {
           on feline companionship and wellness.
         </p>
         <p>
-          When I&apos;m not writing, I spend time volunteering at my local animal
-          shelter, helping cats find loving homes.
+          When I&apos;m not writing, I spend time volunteering at my local
+          animal shelter, helping cats find loving homes.
         </p>
       </div>
     </div>
+  );
+}
+
+function CreateAccountModal({ dialogState, setDialogState }) {
+  return (
+    <AlertDialog open={dialogState} onOpenChange={setDialogState}>
+      <AlertDialogContent className="bg-white rounded-md pt-16 pb-6 max-w-[26rem] sm:max-w-lg flex flex-col items-center">
+        <AlertDialogTitle className="text-3xl font-semibold pb-2 text-center">
+          Create an account to continue
+        </AlertDialogTitle>
+        <button className="rounded-full text-white bg-foreground hover:bg-muted-foreground transition-colors py-4 text-lg w-52">
+          Create account
+        </button>
+        <AlertDialogDescription className="flex flex-row gap-1 justify-center font-medium text-center pt-2   text-muted-foreground">
+          Already have an account?
+          <a
+            href="/login"
+            className="text-foreground hover:text-muted-foreground transition-colors underline font-semibold"
+          >
+            Log in
+          </a>
+        </AlertDialogDescription>
+        <AlertDialogCancel className="absolute right-4 top-2 sm:top-4 p-1 border-none">
+          <X className="h-6 w-6" />
+        </AlertDialogCancel>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
 
