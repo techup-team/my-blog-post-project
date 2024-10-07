@@ -21,7 +21,7 @@ import { comments } from "@/data/comments";
 import { Textarea } from "@/components/ui/textarea";
 import authorImage from "../assets/author-image.jpeg";
 import axios from "axios";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 export default function ViewPost() {
@@ -36,6 +36,7 @@ export default function ViewPost() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const param = useParams();
+  const navigate = useNavigate();
 
   useEffect(() => {
     getPost();
@@ -59,6 +60,7 @@ export default function ViewPost() {
     } catch (error) {
       console.log(error);
       setIsLoading(false);
+      navigate("*");
     }
   };
 
@@ -189,22 +191,51 @@ function Share({ likesAmount, setDialogState }) {
 }
 
 function Comment({ setDialogState }) {
+  const [comment, setComment] = useState("");
+  const [isError, setIsError] = useState(false);
+  const handleSendComment = (e) => {
+    e.preventDefault();
+    if (!comment.trim()) {
+      setIsError(true);
+    } else {
+      // Submit the comment
+      setIsError(false);
+      console.log("Comment submitted:", comment);
+      // Add the logic for what should happen after sending the comment
+    }
+  };
+
   return (
     <div>
       <div className="space-y-4 px-4 mb-16">
         <h3 className="text-lg font-semibold">Comment</h3>
-        <div className="space-y-2">
+        <form className="space-y-2" onSubmit={handleSendComment}>
           <Textarea
-            onFocus={() => setDialogState(true)}
+            value={comment}
+            onFocus={() => {
+              setIsError(false);
+              setDialogState(true);
+            }}
+            onChange={(e) => setComment(e.target.value)}
             placeholder="What are your thoughts?"
-            className="w-full p-4 h-24 resize-none py-3 rounded-sm placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-muted-foreground"
+            className={`w-full p-4 h-24 resize-none py-3 rounded-sm placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 ${
+              isError ? "border-red-500" : "border-muted-foreground"
+            }`}
           />
+          {isError && (
+            <p className="text-red-500 text-sm">
+              Please type something before sending.
+            </p>
+          )}
           <div className="flex justify-end">
-            <button className="px-8 py-2 bg-foreground text-white rounded-full hover:bg-muted-foreground transition-colors">
+            <button
+              type="submit"
+              className="px-8 py-2 bg-foreground text-white rounded-full hover:bg-muted-foreground transition-colors"
+            >
               Send
             </button>
           </div>
-        </div>
+        </form>
       </div>
       <div className="space-y-6 px-4">
         {comments.map((comment, index) => (
