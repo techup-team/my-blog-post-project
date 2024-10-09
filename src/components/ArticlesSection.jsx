@@ -230,7 +230,7 @@ function BlogCard({ id, image, category, title, description, author, date }) {
         </p>
         <div className="flex items-center text-sm">
           <img
-            className="w-8 h-8 rounded-full mr-2"
+            className="w-8 h-8 object-cover rounded-full mr-2"
             src={authorImage}
             alt={author}
           />
