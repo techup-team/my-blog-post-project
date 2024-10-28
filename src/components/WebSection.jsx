@@ -22,7 +22,7 @@ import {
 
 export function NavBar() {
   const navigate = useNavigate();
-  const [isLoggedIn, setIsLoggedIn] = useState(true); // Replace with actual login state
+  const [isLoggedIn, setIsLoggedIn] = useState(false); // Replace with actual login state
 
   return (
     <nav className="flex items-center justify-between py-4 px-4 md:px-8 bg-background border-b border-muted">
