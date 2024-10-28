@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/sonner";
 import NotFoundPage from "./page/NotFoundPage";
 import SignUpPage from "./page/SignUpPage";
 import LoginPage from "./page/LoginPage";
-import SignUpSuccessPage from "./page/SignupSuccessPage";
+import SignUpSuccessPage from "./page/SignUpSuccessPage";
 import ProfilePage from "./page/ProfilePage";
 import ResetPasswordPage from "./page/ResetPasswordPage";
 
