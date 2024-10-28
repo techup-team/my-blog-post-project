@@ -13,7 +13,6 @@ import {
   Linkedin,
   Github,
   Mail,
-  Bell,
   ChevronDown,
   User,
   Key,
@@ -46,6 +45,7 @@ export function NavBar() {
         </div>
       ) : (
         <div className="hidden sm:flex items-center space-x-4">
+          {/* Optional Requirement (Notification) */}
           {/* <button className="ml-auto p-3.5 rounded-full border border-[#EFEEEB] bg-muted focus:outline-none focus:ring-2 focus:ring-offset-2 text-foreground hover:bg-[#EFEEEB] hover:text-muted-foreground cursor-pointer transition-colors">
             <Bell className="h-4 w-4" />
           </button> */}
@@ -131,6 +131,7 @@ export function NavBar() {
                   <span className="ml-3 text-base font-medium text-foreground">
                     Moodeng ja
                   </span>
+                  {/* Optional Requirement (Notification) */}
                   {/* <button className="ml-auto p-3.5 rounded-full border border-[#EFEEEB] bg-muted focus:outline-none focus:ring-2 focus:ring-offset-2 text-foreground hover:bg-[#EFEEEB] hover:text-muted-foreground cursor-pointer transition-colors">
                     <Bell className="h-4 w-4" />
                   </button> */}

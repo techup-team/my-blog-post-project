@@ -1,4 +1,3 @@
-import { NavBar, Footer } from "@/components/WebSection";
 import { TriangleAlert } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -6,7 +5,6 @@ export default function NotFoundPage() {
   const navigate = useNavigate();
   return (
     <div className="flex flex-col min-h-screen">
-      <NavBar />
       <main className="flex-grow flex items-center justify-center p-4 my-4">
         <div className="flex flex-col space-y-8 items-center w-full max-w-xl bg-[#EFEEEB] rounded-sm shadow-md px-3 sm:px-20 py-14">
           <div className="relative">
@@ -23,7 +21,6 @@ export default function NotFoundPage() {
           </button>
         </div>
       </main>
-      <Footer />
     </div>
   );
 }
