@@ -209,7 +209,7 @@ function Comment({ setDialogState }) {
     <div>
       <div className="space-y-4 px-4 mb-16">
         <h3 className="text-lg font-semibold">Comment</h3>
-        <form className="space-y-2" onSubmit={handleSendComment}>
+        <form className="space-y-2 relative" onSubmit={handleSendComment}>
           <Textarea
             value={comment}
             onFocus={() => {
@@ -218,12 +218,12 @@ function Comment({ setDialogState }) {
             }}
             onChange={(e) => setComment(e.target.value)}
             placeholder="What are your thoughts?"
-            className={`w-full p-4 h-24 resize-none py-3 rounded-sm placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 ${
-              isError ? "border-red-500" : "border-muted-foreground"
+            className={`w-full p-4 h-24 resize-none py-3 rounded-sm placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-muted-foreground ${
+              isError ? "border-red-500" : ""
             }`}
           />
           {isError && (
-            <p className="text-red-500 text-sm">
+            <p className="text-red-500 text-sm absolute">
               Please type something before sending.
             </p>
           )}
@@ -299,20 +299,24 @@ function AuthorBio() {
 }
 
 function CreateAccountModal({ dialogState, setDialogState }) {
+  const navigate = useNavigate();
   return (
     <AlertDialog open={dialogState} onOpenChange={setDialogState}>
       <AlertDialogContent className="bg-white rounded-md pt-16 pb-6 max-w-[22rem] sm:max-w-lg flex flex-col items-center">
         <AlertDialogTitle className="text-3xl font-semibold pb-2 text-center">
           Create an account to continue
         </AlertDialogTitle>
-        <button className="rounded-full text-white bg-foreground hover:bg-muted-foreground transition-colors py-4 text-lg w-52">
+        <button
+          onClick={() => navigate("/signup")}
+          className="rounded-full text-white bg-foreground hover:bg-muted-foreground transition-colors py-4 text-lg w-52"
+        >
           Create account
         </button>
-        <AlertDialogDescription className="flex flex-row gap-1 justify-center font-medium text-center pt-2   text-muted-foreground">
+        <AlertDialogDescription className="flex flex-row gap-1 justify-center font-medium text-center pt-2 text-muted-foreground">
           Already have an account?
           <a
-            href="/login"
-            className="text-foreground hover:text-muted-foreground transition-colors underline font-semibold"
+            onClick={() => navigate("/login")}
+            className="text-foreground hover:text-muted-foreground transition-colors underline font-semibold cursor-pointer"
           >
             Log in
           </a>
