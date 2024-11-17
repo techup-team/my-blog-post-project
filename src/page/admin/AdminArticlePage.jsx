@@ -18,44 +18,72 @@ import {
 } from "@/components/ui/table";
 import { AdminSidebar } from "@/components/AdminWebSection";
 import { useNavigate } from "react-router-dom";
-
-const articles = [
-  {
-    title:
-      "Understanding Cat Behavior: Why Your Feline Friend Acts the Way They Do",
-    category: "Cat",
-    status: "Published",
-  },
-  {
-    title: "The Fascinating World of Cats: Why We Love Our Furry Friends",
-    category: "Cat",
-    status: "Published",
-  },
-  {
-    title: "Finding Motivation: How to Stay Inspired Through Life's Challenges",
-    category: "General",
-    status: "Published",
-  },
-  {
-    title:
-      "The Science of the Cat's Purr: How It Benefits Cats and Humans Alike",
-    category: "Cat",
-    status: "Published",
-  },
-  {
-    title: "Top 10 Health Tips to Keep Your Cat Happy and Healthy",
-    category: "Cat",
-    status: "Published",
-  },
-  {
-    title: "Unlocking Creativity: Simple Habits to Spark Inspiration Daily",
-    category: "Inspiration",
-    status: "Published",
-  },
-];
+import axios from "axios";
+import { useEffect, useState } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function AdminArticleManagementPage() {
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
+  const [posts, setPosts] = useState([]); // Store all fetched posts
+  const [filteredPosts, setFilteredPosts] = useState([]); // Store filtered posts
+  const [searchKeyword, setSearchKeyword] = useState(""); // For search input
+  const [selectedCategory, setSelectedCategory] = useState(""); // For category filter
+  const [selectedStatus, setSelectedStatus] = useState(""); // For status filter
+
+  // Fetch all posts once
+  useEffect(() => {
+    setIsLoading(true);
+    const fetchPosts = async () => {
+      try {
+        const response = await axios.get(
+          "https://blog-post-project-api-with-db.vercel.app/posts?limit=100"
+        );
+        setPosts(response.data.posts); // Store all fetched posts
+        setFilteredPosts(response.data.posts); // Initially, display all posts
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchPosts();
+  }, []);
+
+  // Filter posts based on search keyword, category, and status
+  useEffect(() => {
+    let filtered = posts;
+
+    // Filter by search keyword
+    if (searchKeyword) {
+      filtered = filtered.filter(
+        (post) =>
+          post.title.toLowerCase().includes(searchKeyword.toLowerCase()) ||
+          post.description
+            .toLowerCase()
+            .includes(searchKeyword.toLowerCase()) ||
+          post.content.toLowerCase().includes(searchKeyword.toLowerCase())
+      );
+    }
+
+    // Filter by selected category
+    if (selectedCategory) {
+      filtered = filtered.filter((post) =>
+        post.category.toLowerCase().includes(selectedCategory.toLowerCase())
+      );
+    }
+
+    // Filter by selected status
+    if (selectedStatus) {
+      filtered = filtered.filter((post) =>
+        post.status.toLowerCase().includes(selectedStatus.toLowerCase())
+      );
+    }
+
+    setFilteredPosts(filtered); // Update the filtered posts
+  }, [searchKeyword, selectedCategory, selectedStatus, posts]); // Re-filter whenever any of the filters change
+
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Sidebar */}
@@ -73,15 +101,22 @@ export default function AdminArticleManagementPage() {
           </Button>
         </div>
 
+        {/* Filters */}
         <div className="flex space-x-4 mb-6">
           <div className="flex-1">
             <Input
               type="text"
               placeholder="Search..."
+              value={searchKeyword}
+              onChange={(e) => setSearchKeyword(e.target.value)} // Update search keyword
               className="w-full py-3 rounded-sm placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-muted-foreground"
             />
           </div>
-          <Select>
+
+          <Select
+            value={selectedStatus}
+            onValueChange={(value) => setSelectedStatus(value)} // Update selected status
+          >
             <SelectTrigger className="w-[180px] py-3 rounded-sm text-muted-foreground focus:ring-0 focus:ring-offset-0 focus:border-muted-foreground">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
@@ -90,7 +125,11 @@ export default function AdminArticleManagementPage() {
               <SelectItem value="draft">Draft</SelectItem>
             </SelectContent>
           </Select>
-          <Select>
+
+          <Select
+            value={selectedCategory}
+            onValueChange={(value) => setSelectedCategory(value)} // Update selected category
+          >
             <SelectTrigger className="w-[180px] py-3 rounded-sm text-muted-foreground focus:ring-0 focus:ring-offset-0 focus:border-muted-foreground">
               <SelectValue placeholder="Category" />
             </SelectTrigger>
@@ -102,6 +141,7 @@ export default function AdminArticleManagementPage() {
           </Select>
         </div>
 
+        {/* Table */}
         <Table>
           <TableHeader>
             <TableRow>
@@ -112,25 +152,61 @@ export default function AdminArticleManagementPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {articles.map((article, index) => (
-              <TableRow key={index}>
-                <TableCell className="font-medium">{article.title}</TableCell>
-                <TableCell>{article.category}</TableCell>
-                <TableCell>
-                  <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
-                    {article.status}
-                  </span>
-                </TableCell>
-                <TableCell className="text-right">
-                  <Button variant="ghost" size="sm">
-                    <PenSquare className="h-4 w-4 hover:text-muted-foreground" />
-                  </Button>
-                  <Button variant="ghost" size="sm">
-                    <Trash2 className="h-4 w-4 hover:text-muted-foreground" />
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
+            {isLoading
+              ? // Skeleton loader rows
+                Array(12)
+                  .fill()
+                  .map((_, index) => (
+                    <TableRow key={index}>
+                      <TableCell>
+                        <Skeleton className="h-6 w-[250px] bg-muted-foreground" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-6 w-[150px] bg-muted-foreground" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-6 w-[100px] bg-muted-foreground" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-6 w-[50px] bg-muted-foreground" />
+                      </TableCell>
+                    </TableRow>
+                  ))
+              : filteredPosts.map((article, index) => (
+                  <TableRow key={index}>
+                    <TableCell className="font-medium">
+                      {article.title}
+                    </TableCell>
+                    <TableCell>{article.category}</TableCell>
+                    <TableCell>
+                      <span
+                        className={`inline-flex capitalize items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                          article.status === "draft"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-green-100 text-green-800"
+                        }`}
+                      >
+                        {article.status}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          navigate(
+                            `/admin/article-management/edit/${article.id}`
+                          );
+                        }}
+                      >
+                        <PenSquare className="h-4 w-4 hover:text-muted-foreground" />
+                      </Button>
+                      <Button variant="ghost" size="sm">
+                        <Trash2 className="h-4 w-4 hover:text-muted-foreground" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
           </TableBody>
         </Table>
       </main>

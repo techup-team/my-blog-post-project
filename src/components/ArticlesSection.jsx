@@ -31,11 +31,17 @@ export default function Articles() {
     const fetchPosts = async () => {
       try {
         const response = await axios.get(
-          `https://blog-post-project-api.vercel.app/posts?page=${page}&limit=6&${
+          `https://blog-post-project-api-with-db.vercel.app/posts?page=${page}&limit=6&${
             category !== "Highlight" ? `&category=${category}` : ""
           }`
         );
-        setPosts((prevPosts) => [...prevPosts, ...response.data.posts]);
+        //duplicate fetching first time render bug fixed
+        if (page === 1) {
+          setPosts(response.data.posts); // Replace posts on the first page load
+        } else {
+          setPosts((prevPosts) => [...prevPosts, ...response.data.posts]); // Append on subsequent pages
+        }
+
         setIsLoading(false); // Set isLoading to false after fetching
         if (response.data.currentPage >= response.data.totalPages) {
           setHasMore(false); // No more posts to load
@@ -55,7 +61,7 @@ export default function Articles() {
       const fetchSuggestions = async () => {
         try {
           const response = await axios.get(
-            `https://blog-post-project-api.vercel.app/posts?keyword=${searchKeyword}`
+            `https://blog-post-project-api-with-db.vercel.app/posts?keyword=${searchKeyword}`
           );
           setSuggestions(response.data.posts); // Set search suggestions
           setIsLoading(false);

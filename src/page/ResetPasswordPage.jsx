@@ -13,6 +13,7 @@ import {
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/authentication";
 
 export default function ResetPasswordPage() {
   const navigate = useNavigate();
@@ -25,6 +26,7 @@ export default function ResetPasswordPage() {
     confirmNewPassword: true,
   });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { state } = useAuth();
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -75,15 +77,16 @@ export default function ResetPasswordPage() {
           <div className="hidden md:flex items-center p-6">
             <Avatar className="h-14 w-14">
               <AvatarImage
-                src="/placeholder.svg?height=48&width=48"
-                alt="Moodeng ja"
+                src={state.user.profilePic}
+                alt="Profile"
+                className="object-cover"
               />
               <AvatarFallback>
                 <User />
               </AvatarFallback>
             </Avatar>
             <div className="ml-4">
-              <h1 className="text-2xl font-bold">Moodeng ja</h1>
+              <h1 className="text-2xl font-bold">{state.user.name}</h1>
             </div>
           </div>
 

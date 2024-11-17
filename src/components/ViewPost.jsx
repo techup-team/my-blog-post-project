@@ -47,7 +47,7 @@ export default function ViewPost() {
     setIsLoading(true);
     try {
       const response = await axios.get(
-        `https://blog-post-project-api.vercel.app/posts/${param.postId}`
+        `https://blog-post-project-api-with-db.vercel.app/posts/${param.postId}`
       );
       setImg(response.data.image);
       setTitle(response.data.title);

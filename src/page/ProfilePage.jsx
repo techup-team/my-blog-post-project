@@ -1,15 +1,25 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { NavBar, Footer } from "@/components/WebSection";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User, Lock } from "lucide-react";
+import { useAuth } from "@/contexts/authentication";
 
 export default function ProfilePage() {
+  const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const { state } = useAuth();
   const navigate = useNavigate();
-  const [name, setName] = useState("Moodeng ja");
-  const [username, setUsername] = useState("moodeng.cute");
-  const [email, setEmail] = useState("moodeng.cute@gmail.com");
+
+  useEffect(() => {
+    if (state.user) {
+      setName(state.user.name);
+      setUsername(state.user.username);
+      setEmail(state.user.email);
+    }
+  }, [state.user]);
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -20,15 +30,16 @@ export default function ProfilePage() {
           <div className="hidden md:flex items-center p-6">
             <Avatar className="h-14 w-14">
               <AvatarImage
-                src="/placeholder.svg?height=48&width=48"
-                alt="Moodeng ja"
+                src={state.user.profilePic}
+                alt="Profile"
+                className="object-cover"
               />
               <AvatarFallback>
                 <User />
               </AvatarFallback>
             </Avatar>
             <div className="ml-4">
-              <h1 className="text-2xl font-bold">Moodeng ja</h1>
+              <h1 className="text-2xl font-bold">{state.user.name}</h1>
             </div>
           </div>
 
@@ -52,12 +63,15 @@ export default function ProfilePage() {
             <div className="flex items-center">
               <Avatar className="h-10 w-10">
                 <AvatarImage
-                  src="/placeholder.svg?height=40&width=40"
-                  alt="Moodeng ja"
+                  src={state.user.profilePic}
+                  alt="Profile"
+                  className="object-cover"
                 />
-                <AvatarFallback>MJ</AvatarFallback>
+                <AvatarFallback>
+                  <User className="h-8 w-8" />
+                </AvatarFallback>
               </Avatar>
-              <h2 className="ml-3 text-xl font-semibold">Moodeng ja</h2>
+              <h2 className="ml-3 text-xl font-semibold">{state.user.name}</h2>
             </div>
           </div>
 
@@ -88,8 +102,9 @@ export default function ProfilePage() {
               <div className="flex flex-col md:flex-row items-center justify-start md:gap-6 mb-6">
                 <Avatar className="h-28 w-28 mb-5">
                   <AvatarImage
-                    src="/placeholder.svg?height=96&width=96"
+                    src={state.user.profilePic}
                     alt="Profile"
+                    className="object-cover"
                   />
                   <AvatarFallback>
                     <User className="h-8 w-8" />

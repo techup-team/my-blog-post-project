@@ -2,41 +2,72 @@ import { useState } from "react";
 import { NavBar, Footer } from "@/components/WebSection";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
+import { useAuth } from "@/contexts/authentication";
+import { toast } from "sonner";
+import { X, Loader2 } from "lucide-react";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [isErrorEmail, setIsErrorEmail] = useState(false);
-  const [isErrorPassword, setIsErrorPassword] = useState(false);
+  const { login, state } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const [formValues, setFormValues] = useState({
+    email: "",
+    password: "",
+  });
+  const [formErrors, setFormErrors] = useState({});
+
+  // Validate inputs
+  const validateInputs = () => {
+    const errors = {};
+
+    // Validate email
+    if (!formValues.email.trim()) {
+      errors.email = "Email is required.";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formValues.email)) {
+      errors.email = "Please enter a valid email address.";
+    }
+
+    // Validate password
+    if (!formValues.password.trim()) {
+      errors.password = "Password is required.";
+    } else if (formValues.password.length < 8) {
+      errors.password = "Wrong password. Try again";
+    }
+
+    return errors;
+  };
+
+  // Handle form submission
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    const errors = validateInputs();
+    setFormErrors(errors);
 
-    let valid = true;
-
-    if (!email.trim()) {
-      setIsErrorEmail(true);
-      valid = false;
-    } else {
-      setIsErrorEmail(false);
-    }
-
-    if (!password.trim()) {
-      setIsErrorPassword(true);
-      valid = false;
-    } else {
-      setIsErrorPassword(false);
-    }
-
-    if (valid) {
-      // Submit the login form
-      console.log("Logging in with:", { email, password });
-      // Add logic for login submission (e.g., API call)
-
-      // Navigate to a new page after login
+    if (Object.keys(errors).length === 0) {
+      const result = await login(formValues);
+      if (result?.error) {
+        return toast.custom((t) => (
+          <div className="bg-red-500 text-white p-4 rounded-sm flex justify-between items-start">
+            <div>
+              <h2 className="font-bold text-lg mb-1">{result.error}</h2>
+              <p className="text-sm">Please try another password or email</p>
+            </div>
+            <button
+              onClick={() => toast.dismiss(t)}
+              className="text-white hover:text-gray-200"
+            >
+              <X size={20} />
+            </button>
+          </div>
+        ));
+      }
       navigate("/");
     }
+  };
+
+  // Handle input change
+  const handleChange = (key, value) => {
+    setFormValues((prev) => ({ ...prev, [key]: value }));
   };
 
   return (
@@ -59,15 +90,16 @@ export default function LoginPage() {
                 id="email"
                 type="email"
                 placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={formValues.email}
+                onChange={(e) => handleChange("email", e.target.value)}
                 className={`mt-1 py-3 rounded-sm placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-muted-foreground ${
-                  isErrorEmail ? "border-red-500" : ""
+                  formErrors.email ? "border-red-500" : ""
                 }`}
+                disabled={state.loading}
               />
-              {isErrorEmail && (
+              {formErrors.email && (
                 <p className="text-red-500 text-xs absolute">
-                  Please enter a valid email.
+                  {formErrors.email}
                 </p>
               )}
             </div>
@@ -82,23 +114,30 @@ export default function LoginPage() {
                 id="password"
                 type="password"
                 placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                value={formValues.password}
+                onChange={(e) => handleChange("password", e.target.value)}
                 className={`mt-1 py-3 rounded-sm placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-muted-foreground ${
-                  isErrorPassword ? "border-red-500" : ""
+                  formErrors.password ? "border-red-500" : ""
                 }`}
+                disabled={state.loading}
               />
-              {isErrorPassword && (
+              {formErrors.password && (
                 <p className="text-red-500 text-xs absolute">
-                  Please enter your password.
+                  {formErrors.password}
                 </p>
               )}
             </div>
             <div className="flex justify-center">
               <button
                 type="submit"
-                className="px-8 py-2 bg-foreground text-white rounded-full hover:bg-muted-foreground transition-colors"
+                className="px-8 py-2 bg-foreground text-white rounded-full hover:bg-muted-foreground transition-colors flex items-center gap-1"
+                disabled={state.loading}
               >
+                {state.loading ? (
+                  <Loader2 className="animate-spin" size={20} />
+                ) : (
+                  ""
+                )}
                 Log in
               </button>
             </div>
@@ -106,7 +145,7 @@ export default function LoginPage() {
           <p className="flex flex-row justify-center gap-1 mt-4 text-sm text-center pt-2 text-muted-foreground font-medium">
             Don&apos;t have an account?{" "}
             <a
-              onClick={() => navigate("/signup")}
+              onClick={() => navigate("/sign-up")}
               className="text-foreground hover:text-muted-foreground transition-colors underline font-semibold cursor-pointer"
             >
               Sign up
