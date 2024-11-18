@@ -20,6 +20,7 @@ import {
   SquareArrowOutUpRight,
 } from "lucide-react";
 import { useAuth } from "@/contexts/authentication";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function NavBar() {
   const navigate = useNavigate();
@@ -31,9 +32,11 @@ export function NavBar() {
         Thomson P<span className="text-green-400">.</span>
       </button>
       {state.getUserLoading ? (
-        <div className="text-foreground sm:flex items-center gap-3 px-8 py-2 font-medium hidden">
-          <Loader2 className="animate-spin" size={28} />
-          Loading...
+        <div className="hidden sm:flex items-center ">
+          <Skeleton className="h-12 w-12 rounded-full bg-[#EFEEEB]" />
+          <Skeleton className="ml-3 h-6 w-32 bg-[#EFEEEB]" />
+          {/* Optional Requirement (Notification) */}
+          {/* <Skeleton className="ml-auto h-11 w-11 rounded-full" /> */}
         </div>
       ) : !isAuthenticated ? (
         <div className="hidden sm:flex space-x-4">

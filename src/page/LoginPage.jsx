@@ -30,8 +30,6 @@ export default function LoginPage() {
     // Validate password
     if (!formValues.password.trim()) {
       errors.password = "Password is required.";
-    } else if (formValues.password.length < 8) {
-      errors.password = "Wrong password. Try again";
     }
 
     return errors;
