@@ -25,41 +25,55 @@ export default function Articles() {
   const [suggestions, setSuggestions] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [categories, setCategories] = useState([]);
+  const [isFirstTimeRender, setIsFirstTimeRender] = useState(true);
 
   const navigate = useNavigate();
 
   useEffect(() => {
-    setIsLoading(true); // Set isLoading to true when starting to fetch
+    // Fetch categories only on the first render
+    if (isFirstTimeRender) {
+      const fetchCategories = async () => {
+        try {
+          const responseCategories = await axios.get(
+            "https://blog-post-project-api-with-db.vercel.app/categories"
+          );
+          setCategories(responseCategories.data);
+          setIsFirstTimeRender(false); // Mark the first render logic as done
+        } catch (error) {
+          console.error("Error fetching categories:", error);
+        }
+      };
+
+      fetchCategories();
+    }
+  }, [isFirstTimeRender]);
+
+  useEffect(() => {
+    // Fetch posts when page or category changes
     const fetchPosts = async () => {
+      setIsLoading(true); // Start loading
       try {
         const response = await axios.get(
-          `https://blog-post-project-api-with-db.vercel.app/posts?page=${page}&limit=6&${
+          `https://blog-post-project-api-with-db.vercel.app/posts?page=${page}&limit=6${
             category !== "Highlight" ? `&category=${category}` : ""
           }`
         );
-        //duplicate fetching first time render bug fixed
         if (page === 1) {
           setPosts(response.data.posts); // Replace posts on the first page load
         } else {
           setPosts((prevPosts) => [...prevPosts, ...response.data.posts]); // Append on subsequent pages
         }
-
-        const responseCategories = await axios.get(
-          "https://blog-post-project-api-with-db.vercel.app/categories"
-        );
-        setCategories(responseCategories.data);
-
-        setIsLoading(false); // Set isLoading to false after fetching
+        setIsLoading(false); // Stop loading
         if (response.data.currentPage >= response.data.totalPages) {
           setHasMore(false); // No more posts to load
         }
       } catch {
-        setIsLoading(false); // Set loading to false in case of error
+        setIsLoading(false); // Handle error and stop loading
       }
     };
 
-    fetchPosts(); // Call fetchPosts within useEffect
-  }, [page, category]);
+    fetchPosts(); // Call fetchPosts when category or page changes
+  }, [page, category]); // Effect depends on page and category
 
   useEffect(() => {
     if (searchKeyword.length > 0) {
@@ -149,7 +163,7 @@ export default function Articles() {
             </SelectContent>
           </Select>
         </div>
-        {isLoading ? (
+        {isFirstTimeRender ? (
           <div className="hidden md:flex space-x-2">
             <Skeleton className="w-24 h-10 rounded-sm" />
             <Skeleton className="w-20 h-10 rounded-sm" />
