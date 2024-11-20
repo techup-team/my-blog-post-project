@@ -32,6 +32,7 @@ export default function AdminCreateArticlePage() {
   const [isLoading, setIsLoading] = useState(null);
   const [isSaving, setIsSaving] = useState(null);
   const [categories, setCategories] = useState([]);
+  const [imageFile, setImageFile] = useState({});
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -71,17 +72,21 @@ export default function AdminCreateArticlePage() {
 
   const handleSave = async (postStatusId) => {
     setIsSaving(true);
+    const formData = new FormData();
+
+    formData.append("title", post.title);
+    formData.append("category_id", post.category_id);
+    formData.append("description", post.description);
+    formData.append("content", post.content);
+    formData.append("status_id", postStatusId);
+    formData.append("imageFile", imageFile.file);
+
     try {
       await axios.post(
-        `https://blog-post-project-api-with-db.vercel.app/posts`,
+        "https://blog-post-project-api-with-db.vercel.app/posts",
+        formData,
         {
-          title: post.title,
-          image:
-            "https://res.cloudinary.com/dcbpjtd1r/image/upload/v1728449771/my-blog-post/g8qpepvgnz6gioylyhrz.jpg", // will implement file uploading later
-          category_id: post.category_id,
-          description: post.description,
-          content: post.content,
-          status_id: postStatusId, //  1 = draft, 2 = published
+          headers: { "Content-Type": "multipart/form-data" },
         }
       );
 
@@ -131,6 +136,61 @@ export default function AdminCreateArticlePage() {
     }
   };
 
+  const handleFileChange = (event) => {
+    const file = event.target.files[0]; // Get the selected file
+
+    // Check if the file is an image
+    const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+
+    if (!file) {
+      // No file selected
+      return;
+    }
+
+    if (!allowedTypes.includes(file.type)) {
+      toast.custom((t) => (
+        <div className="bg-red-500 text-white p-4 rounded-sm flex justify-between items-start">
+          <div>
+            <h2 className="font-bold text-lg mb-1">Failed to upload file</h2>
+            <p className="text-sm">
+              Please upload a valid image file (JPEG, PNG, GIF, WebP).
+            </p>
+          </div>
+          <button
+            onClick={() => toast.dismiss(t)}
+            className="text-white hover:text-gray-200"
+          >
+            <X size={20} />
+          </button>
+        </div>
+      ));
+      return; // Stop further processing if it's not a valid image
+    }
+
+    // Optionally check file size (e.g., max 5MB)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      toast.custom((t) => (
+        <div className="bg-red-500 text-white p-4 rounded-sm flex justify-between items-start">
+          <div>
+            <h2 className="font-bold text-lg mb-1">Failed to upload file</h2>
+            <p className="text-sm">
+              The file is too large. Please upload an image smaller than 5MB.
+            </p>
+          </div>
+          <button
+            onClick={() => toast.dismiss(t)}
+            className="text-white hover:text-gray-200"
+          >
+            <X size={20} />
+          </button>
+        </div>
+      ));
+      return;
+    }
+
+    setImageFile({ file }); // Store the file object
+  };
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Sidebar */}
@@ -171,11 +231,19 @@ export default function AdminCreateArticlePage() {
                 Thumbnail image
               </label>
               <div className="flex items-end space-x-4">
-                <div className="flex justify-center items-center w-full max-w-lg h-64 px-6 py-20 border-2 border-gray-300 border-dashed rounded-md bg-gray-50">
-                  <div className="text-center space-y-2">
-                    <ImageIcon className="mx-auto h-8 w-8 text-gray-400" />
+                {imageFile.file ? (
+                  <img
+                    src={URL.createObjectURL(imageFile.file)}
+                    alt="Uploaded"
+                    className="rounded-md object-cover max-w-lg h-80"
+                  />
+                ) : (
+                  <div className="flex justify-center items-center w-full max-w-lg h-80 px-6 py-20 border-2 border-gray-300 border-dashed rounded-md bg-gray-50">
+                    <div className="text-center space-y-2">
+                      <ImageIcon className="mx-auto h-8 w-8 text-gray-400" />
+                    </div>
                   </div>
-                </div>
+                )}
                 <label
                   htmlFor="file-upload"
                   className="px-8 py-2 bg-background rounded-full text-foreground border border-foreground hover:border-muted-foreground hover:text-muted-foreground transition-colors cursor-pointer"
@@ -186,6 +254,7 @@ export default function AdminCreateArticlePage() {
                     name="file-upload"
                     type="file"
                     className="sr-only"
+                    onChange={handleFileChange}
                   />
                 </label>
               </div>
