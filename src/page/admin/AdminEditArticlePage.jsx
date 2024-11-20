@@ -119,19 +119,26 @@ export default function AdminEditArticlePage() {
         formData.append("status_id", postStatusId);
         formData.append("imageFile", imageFile.file);
 
-        await axios.put(`http://localhost:4001/posts/${postId}`, formData, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
+        await axios.put(
+          `https://blog-post-project-api-with-db.vercel.app/posts/${postId}`,
+          formData,
+          {
+            headers: { "Content-Type": "multipart/form-data" },
+          }
+        );
       } else {
         // If the image is not changed, use the old method
-        await axios.put(`http://localhost:4001/posts/${postId}`, {
-          title: post.title,
-          image: post.image, // Existing image URL
-          category_id: post.category_id,
-          description: post.description,
-          content: post.content,
-          status_id: postStatusId,
-        });
+        await axios.put(
+          `https://blog-post-project-api-with-db.vercel.app/posts/${postId}`,
+          {
+            title: post.title,
+            image: post.image, // Existing image URL
+            category_id: post.category_id,
+            description: post.description,
+            content: post.content,
+            status_id: postStatusId,
+          }
+        );
       }
 
       // Success toast
