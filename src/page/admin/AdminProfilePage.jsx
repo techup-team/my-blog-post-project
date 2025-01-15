@@ -6,25 +6,22 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AdminSidebar } from "@/components/AdminWebSection";
 import { useAuth } from "@/contexts/authentication";
 import { toast } from "sonner";
-import { Skeleton } from "@/components/ui/skeleton";
 import axios from "axios";
 
 export default function AdminProfilePage() {
-  const { state } = useAuth();
+  const { state, fetchUser } = useAuth();
   const [profile, setProfile] = useState({
     image: "",
     name: "",
     username: "",
     email: "",
   });
-  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [imageFile, setImageFile] = useState(null);
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        setIsLoading(true);
         // Set initial profile data from auth state
         setProfile({
           image: state.user.profilePic || "",
@@ -49,8 +46,6 @@ export default function AdminProfilePage() {
             </button>
           </div>
         ));
-      } finally {
-        setIsLoading(false);
       }
     };
 
@@ -172,125 +167,87 @@ export default function AdminProfilePage() {
       ));
     } finally {
       setIsSaving(false);
+      fetchUser();
     }
   };
   return (
     <div className="flex h-screen bg-gray-100">
       <AdminSidebar />
-      {isLoading ? (
-        <ProfileSkeleton />
-      ) : (
-        <main className="flex-1 p-8 bg-gray-50 overflow-auto">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-semibold">Profile</h2>
-            <Button
-              className="px-8 py-2 rounded-full"
-              onClick={handleSave}
-              disabled={isSaving}
+      <main className="flex-1 p-8 bg-gray-50 overflow-auto">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-semibold">Profile</h2>
+          <Button
+            className="px-8 py-2 rounded-full"
+            onClick={handleSave}
+            disabled={isSaving}
+          >
+            {isSaving ? "Saving..." : "Save"}
+          </Button>
+        </div>
+
+        <div>
+          <div className="flex items-center mb-6">
+            <Avatar className="w-24 h-24 mr-4">
+              <AvatarImage
+                src={profile.image}
+                alt="Profile picture"
+                className="object-cover"
+              />
+              <AvatarFallback>{profile.name?.charAt(0) || "U"}</AvatarFallback>
+            </Avatar>
+            <label
+              htmlFor="profile-upload"
+              className="px-8 py-2 bg-background rounded-full text-foreground border border-foreground hover:border-muted-foreground hover:text-muted-foreground transition-colors cursor-pointer"
             >
-              {isSaving ? "Saving..." : "Save"}
-            </Button>
+              <span>Upload profile picture</span>
+              <input
+                id="profile-upload"
+                type="file"
+                className="sr-only"
+                onChange={handleFileChange}
+                accept="image/*"
+              />
+            </label>
           </div>
 
-          <div>
-            <div className="flex items-center mb-6">
-              <Avatar className="w-24 h-24 mr-4">
-                <AvatarImage
-                  src={profile.image}
-                  alt="Profile picture"
-                  className="object-cover"
-                />
-                <AvatarFallback>
-                  {profile.name?.charAt(0) || "U"}
-                </AvatarFallback>
-              </Avatar>
-              <label
-                htmlFor="profile-upload"
-                className="px-8 py-2 bg-background rounded-full text-foreground border border-foreground hover:border-muted-foreground hover:text-muted-foreground transition-colors cursor-pointer"
-              >
-                <span>Upload profile picture</span>
-                <input
-                  id="profile-upload"
-                  type="file"
-                  className="sr-only"
-                  onChange={handleFileChange}
-                  accept="image/*"
-                />
-              </label>
+          <form
+            className="space-y-7 max-w-2xl"
+            onSubmit={(e) => e.preventDefault()}
+          >
+            <div>
+              <label htmlFor="name">Name</label>
+              <Input
+                id="name"
+                name="name"
+                value={profile.name}
+                onChange={handleInputChange}
+                className="mt-1 py-3 rounded-sm placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-muted-foreground"
+              />
             </div>
-
-            <form
-              className="space-y-7 max-w-2xl"
-              onSubmit={(e) => e.preventDefault()}
-            >
-              <div>
-                <label htmlFor="name">Name</label>
-                <Input
-                  id="name"
-                  name="name"
-                  value={profile.name}
-                  onChange={handleInputChange}
-                  className="mt-1 py-3 rounded-sm placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-muted-foreground"
-                />
-              </div>
-              <div>
-                <label htmlFor="username">Username</label>
-                <Input
-                  id="username"
-                  name="username"
-                  value={profile.username}
-                  onChange={handleInputChange}
-                  className="mt-1 py-3 rounded-sm placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-muted-foreground"
-                />
-              </div>
-              <div>
-                <label htmlFor="email">Email</label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  value={profile.email}
-                  disabled
-                  className="mt-1 py-3 rounded-sm placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-muted-foreground"
-                />
-              </div>
-            </form>
-          </div>
-        </main>
-      )}
+            <div>
+              <label htmlFor="username">Username</label>
+              <Input
+                id="username"
+                name="username"
+                value={profile.username}
+                onChange={handleInputChange}
+                className="mt-1 py-3 rounded-sm placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-muted-foreground"
+              />
+            </div>
+            <div>
+              <label htmlFor="email">Email</label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                value={profile.email}
+                disabled
+                className="mt-1 py-3 rounded-sm placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-muted-foreground"
+              />
+            </div>
+          </form>
+        </div>
+      </main>
     </div>
-  );
-}
-
-function ProfileSkeleton() {
-  return (
-    <main className="flex-1 p-8 bg-gray-50 overflow-auto">
-      <div className="flex justify-between items-center mb-6">
-        <Skeleton className="h-8 w-32 bg-[#EFEEEB]" />
-        <Skeleton className="h-10 w-24 bg-[#EFEEEB]" />
-      </div>
-
-      <div>
-        <div className="flex items-center mb-6">
-          <Skeleton className="w-24 h-24 rounded-full mr-4 bg-[#EFEEEB]" />
-          <Skeleton className="h-10 w-48 bg-[#EFEEEB]" />
-        </div>
-
-        <div className="space-y-7 max-w-2xl">
-          <div>
-            <Skeleton className="h-4 w-16 mb-2 bg-[#EFEEEB]" />
-            <Skeleton className="h-10 w-full bg-[#EFEEEB]" />
-          </div>
-          <div>
-            <Skeleton className="h-4 w-24 mb-2 bg-[#EFEEEB]" />
-            <Skeleton className="h-10 w-full bg-[#EFEEEB]" />
-          </div>
-          <div>
-            <Skeleton className="h-4 w-16 mb-2 bg-[#EFEEEB]" />
-            <Skeleton className="h-10 w-full bg-[#EFEEEB]" />
-          </div>
-        </div>
-      </div>
-    </main>
   );
 }

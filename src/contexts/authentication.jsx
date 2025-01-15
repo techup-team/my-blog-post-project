@@ -114,6 +114,7 @@ function AuthProvider(props) {
         logout,
         register,
         isAuthenticated,
+        fetchUser,
       }}
     >
       {props.children}

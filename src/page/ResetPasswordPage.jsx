@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/authentication";
+import axios from "axios";
 
 export default function ResetPasswordPage() {
   const navigate = useNavigate();
@@ -46,26 +47,61 @@ export default function ResetPasswordPage() {
     }
   };
 
-  const handleResetPassword = () => {
-    // Add PUT API to reset password
-    toast.custom((t) => (
-      <div className="bg-green-500 text-white p-4 rounded-sm flex justify-between items-start">
-        <div>
-          <h2 className="font-bold text-lg mb-1">Reset!</h2>
-          <p className="text-sm">
-            Password reset successful. You can now log in with your new
-            password.
-          </p>
+  const handleResetPassword = async () => {
+    try {
+      setIsDialogOpen(false);
+
+      const response = await axios.put(
+        `https://blog-post-project-api-with-db.vercel.app/auth/reset-password`,
+        {
+          oldPassword: password,
+          newPassword: newPassword,
+        }
+      );
+
+      if (response.status === 200) {
+        toast.custom((t) => (
+          <div className="bg-green-500 text-white p-4 rounded-sm flex justify-between items-start">
+            <div>
+              <h2 className="font-bold text-lg mb-1">Success!</h2>
+              <p className="text-sm">
+                Password reset successful. You can now log in with your new
+                password.
+              </p>
+            </div>
+            <button
+              onClick={() => toast.dismiss(t)}
+              className="text-white hover:text-gray-200"
+            >
+              <X size={20} />
+            </button>
+          </div>
+        ));
+
+        // Clear form fields after successful reset
+        setPassword("");
+        setNewPassword("");
+        setConfirmNewPassword("");
+      }
+    } catch (error) {
+      toast.custom((t) => (
+        <div className="bg-red-500 text-white p-4 rounded-sm flex justify-between items-start">
+          <div>
+            <h2 className="font-bold text-lg mb-1">Error</h2>
+            <p className="text-sm">
+              {error.response?.data?.error ||
+                "Something went wrong. Please try again."}
+            </p>
+          </div>
+          <button
+            onClick={() => toast.dismiss(t)}
+            className="text-white hover:text-gray-200"
+          >
+            <X size={20} />
+          </button>
         </div>
-        <button
-          onClick={() => toast.dismiss(t)}
-          className="text-white hover:text-gray-200"
-        >
-          <X size={20} />
-        </button>
-      </div>
-    ));
-    setIsDialogOpen(false);
+      ));
+    }
   };
 
   return (
@@ -73,7 +109,7 @@ export default function ResetPasswordPage() {
       <NavBar />
       <div className="min-h-screen md:p-8">
         <div className="max-w-4xl w-full md:mx-auto overflow-hidden">
-          {/* Desktop Header (hidden on mobile) */}
+          {/* Desktop Header */}
           <div className="hidden md:flex items-center p-6">
             <Avatar className="h-14 w-14">
               <AvatarImage
@@ -94,9 +130,7 @@ export default function ResetPasswordPage() {
           <div className="md:hidden p-4">
             <div className="flex justify-start gap-12 items-center mb-4">
               <a
-                onClick={() => {
-                  navigate("/profile");
-                }}
+                onClick={() => navigate("/profile")}
                 className="flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground cursor-pointer"
               >
                 <User className="h-5 w-5 mb-1" />
@@ -110,26 +144,25 @@ export default function ResetPasswordPage() {
             <div className="flex items-center">
               <Avatar className="h-10 w-10">
                 <AvatarImage
-                  src="/placeholder.svg?height=40&width=40"
-                  alt="Moodeng ja"
+                  src={state.user.profilePic}
+                  alt="Profile"
+                  className="object-cover"
                 />
                 <AvatarFallback>
                   <User />
                 </AvatarFallback>
               </Avatar>
-              <h2 className="ml-3 text-xl font-semibold">Moodeng ja</h2>
+              <h2 className="ml-3 text-xl font-semibold">{state.user.name}</h2>
             </div>
           </div>
 
           <div className="flex flex-col md:flex-row">
-            {/* Desktop Sidebar (hidden on mobile) */}
+            {/* Desktop Sidebar */}
             <aside className="hidden md:block w-64 p-6">
               <nav>
                 <div className="space-y-3">
                   <a
-                    onClick={() => {
-                      navigate("/profile");
-                    }}
+                    onClick={() => navigate("/profile")}
                     className="flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground cursor-pointer"
                   >
                     <User className="h-5 w-5 mb-1" />
@@ -145,7 +178,7 @@ export default function ResetPasswordPage() {
 
             {/* Main Content */}
             <main className="flex-1 p-8 bg-[#EFEEEB] md:m-2 md:shadow-md md:rounded-lg">
-              <form onClick={handleSubmit} className="space-y-7">
+              <form onSubmit={handleSubmit} className="space-y-7">
                 <div className="relative">
                   <label
                     htmlFor="current-password"
@@ -255,7 +288,7 @@ function ResetPasswordModal({ dialogState, setDialogState, resetFunction }) {
           </button>
           <button
             onClick={resetFunction}
-            className="rounded-full text-white bg-foreground hover:bg-muted-foreground transition-colors py-4 text-lg px-10 "
+            className="rounded-full text-white bg-foreground hover:bg-muted-foreground transition-colors py-4 text-lg px-10"
           >
             Reset
           </button>
