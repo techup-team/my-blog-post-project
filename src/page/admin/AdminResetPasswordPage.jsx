@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AdminSidebar } from "@/components/AdminWebSection";
 import { useState } from "react";
+import axios from "axios";
 import { X } from "lucide-react";
 import {
   AlertDialog,
@@ -42,26 +43,64 @@ export default function AdminResetPasswordPage() {
     }
   };
 
-  const handleResetPassword = () => {
-    // Add PUT API to reset password
-    toast.custom((t) => (
-      <div className="bg-green-500 text-white p-4 rounded-sm flex justify-between items-start">
-        <div>
-          <h2 className="font-bold text-lg mb-1">Reset!</h2>
-          <p className="text-sm">
-            Password reset successful. You can now log in with your new
-            password.
-          </p>
+  const handleResetPassword = async () => {
+    try {
+      // Close the dialog
+      setIsDialogOpen(false);
+
+      // Make API call to reset the password using JWT interceptor
+
+      const response = await axios.put(
+        `https://blog-post-project-api-with-db.vercel.app/auth/reset-password`,
+        {
+          oldPassword: password,
+          newPassword: newPassword,
+        }
+      );
+
+      // Handle successful response
+      if (response.status === 200) {
+        toast.custom((t) => (
+          <div className="bg-green-500 text-white p-4 rounded-sm flex justify-between items-start">
+            <div>
+              <h2 className="font-bold text-lg mb-1">Success!</h2>
+              <p className="text-sm">
+                Password reset successful. You can now log in with your new
+                password.
+              </p>
+            </div>
+            <button
+              onClick={() => toast.dismiss(t)}
+              className="text-white hover:text-gray-200"
+            >
+              <X size={20} />
+            </button>
+          </div>
+        ));
+        setPassword("");
+        setNewPassword("");
+        setConfirmNewPassword("");
+      }
+    } catch (error) {
+      // Handle errors
+      toast.custom((t) => (
+        <div className="bg-red-500 text-white p-4 rounded-sm flex justify-between items-start">
+          <div>
+            <h2 className="font-bold text-lg mb-1">Error</h2>
+            <p className="text-sm">
+              {error.response?.data?.error ||
+                "Something went wrong. Please try again."}
+            </p>
+          </div>
+          <button
+            onClick={() => toast.dismiss(t)}
+            className="text-white hover:text-gray-200"
+          >
+            <X size={20} />
+          </button>
         </div>
-        <button
-          onClick={() => toast.dismiss(t)}
-          className="text-white hover:text-gray-200"
-        >
-          <X size={20} />
-        </button>
-      </div>
-    ));
-    setIsDialogOpen(false);
+      ));
+    }
   };
   return (
     <div className="flex h-screen bg-gray-100">

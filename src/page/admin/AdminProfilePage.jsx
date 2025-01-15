@@ -1,73 +1,296 @@
+import { useState, useEffect } from "react";
+import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AdminSidebar } from "@/components/AdminWebSection";
+import { useAuth } from "@/contexts/authentication";
+import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
+import axios from "axios";
 
 export default function AdminProfilePage() {
+  const { state } = useAuth();
+  const [profile, setProfile] = useState({
+    image: "",
+    name: "",
+    username: "",
+    email: "",
+  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [imageFile, setImageFile] = useState(null);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        setIsLoading(true);
+        // Set initial profile data from auth state
+        setProfile({
+          image: state.user.profilePic || "",
+          name: state.user.name || "",
+          username: state.user.username || "",
+          email: state.user.email || "",
+        });
+      } catch {
+        toast.custom((t) => (
+          <div className="bg-red-500 text-white p-4 rounded-sm flex justify-between items-start">
+            <div>
+              <h2 className="font-bold text-lg mb-1">
+                Failed to fetch profile
+              </h2>
+              <p className="text-sm">Please try again later.</p>
+            </div>
+            <button
+              onClick={() => toast.dismiss(t)}
+              className="text-white hover:text-gray-200"
+            >
+              <X size={20} />
+            </button>
+          </div>
+        ));
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, [state.user]);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setProfile((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleFileChange = (event) => {
+    const file = event.target.files[0];
+
+    if (!file) return;
+
+    // Check file type
+    const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+      toast.custom((t) => (
+        <div className="bg-red-500 text-white p-4 rounded-sm flex justify-between items-start">
+          <div>
+            <h2 className="font-bold text-lg mb-1">Invalid file type</h2>
+            <p className="text-sm">
+              Please upload a valid image file (JPEG, PNG, GIF, WebP).
+            </p>
+          </div>
+          <button
+            onClick={() => toast.dismiss(t)}
+            className="text-white hover:text-gray-200"
+          >
+            <X size={20} />
+          </button>
+        </div>
+      ));
+      return;
+    }
+
+    // Check file size (5MB limit)
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      toast.custom((t) => (
+        <div className="bg-red-500 text-white p-4 rounded-sm flex justify-between items-start">
+          <div>
+            <h2 className="font-bold text-lg mb-1">File too large</h2>
+            <p className="text-sm">Please upload an image smaller than 5MB.</p>
+          </div>
+          <button
+            onClick={() => toast.dismiss(t)}
+            className="text-white hover:text-gray-200"
+          >
+            <X size={20} />
+          </button>
+        </div>
+      ));
+      return;
+    }
+
+    setImageFile(file);
+    setProfile((prev) => ({
+      ...prev,
+      image: URL.createObjectURL(file),
+    }));
+  };
+
+  const handleSave = async () => {
+    try {
+      setIsSaving(true);
+
+      const formData = new FormData();
+      formData.append("name", profile.name);
+      formData.append("username", profile.username);
+
+      if (imageFile) {
+        formData.append("imageFile", imageFile);
+      }
+
+      await axios.put(
+        "https://blog-post-project-api-with-db.vercel.app/profile",
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        }
+      );
+
+      toast.custom((t) => (
+        <div className="bg-green-500 text-white p-4 rounded-sm flex justify-between items-start">
+          <div>
+            <h2 className="font-bold text-lg mb-1">
+              Profile updated successfully
+            </h2>
+            <p className="text-sm">Your profile changes have been saved.</p>
+          </div>
+          <button
+            onClick={() => toast.dismiss(t)}
+            className="text-white hover:text-gray-200"
+          >
+            <X size={20} />
+          </button>
+        </div>
+      ));
+    } catch {
+      toast.custom((t) => (
+        <div className="bg-red-500 text-white p-4 rounded-sm flex justify-between items-start">
+          <div>
+            <h2 className="font-bold text-lg mb-1">Failed to update profile</h2>
+            <p className="text-sm">Please try again later.</p>
+          </div>
+          <button
+            onClick={() => toast.dismiss(t)}
+            className="text-white hover:text-gray-200"
+          >
+            <X size={20} />
+          </button>
+        </div>
+      ));
+    } finally {
+      setIsSaving(false);
+    }
+  };
   return (
     <div className="flex h-screen bg-gray-100">
-      {/* Sidebar */}
       <AdminSidebar />
-      {/* Main content */}
-      <main className="flex-1 p-8 bg-gray-50 overflow-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-semibold">Profile</h2>
-          <Button className="px-8 py-2 rounded-full">Save</Button>
-        </div>
-
-        <div>
-          <div className="flex items-center mb-6">
-            <Avatar className="w-24 h-24 mr-4">
-              <AvatarImage
-                src="/placeholder.svg?height=96&width=96"
-                alt="Profile picture"
-              />
-              <AvatarFallback>TP</AvatarFallback>
-            </Avatar>
-            <Button variant="outline">Upload profile picture</Button>
+      {isLoading ? (
+        <ProfileSkeleton />
+      ) : (
+        <main className="flex-1 p-8 bg-gray-50 overflow-auto">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-semibold">Profile</h2>
+            <Button
+              className="px-8 py-2 rounded-full"
+              onClick={handleSave}
+              disabled={isSaving}
+            >
+              {isSaving ? "Saving..." : "Save"}
+            </Button>
           </div>
 
-          <form className="space-y-7 max-w-2xl">
-            <div>
-              <label htmlFor="name">Name</label>
-              <Input
-                id="name"
-                defaultValue="Thompson P."
-                className="mt-1 py-3 rounded-sm placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-muted-foreground"
-              />
+          <div>
+            <div className="flex items-center mb-6">
+              <Avatar className="w-24 h-24 mr-4">
+                <AvatarImage
+                  src={profile.image}
+                  alt="Profile picture"
+                  className="object-cover"
+                />
+                <AvatarFallback>
+                  {profile.name?.charAt(0) || "U"}
+                </AvatarFallback>
+              </Avatar>
+              <label
+                htmlFor="profile-upload"
+                className="px-8 py-2 bg-background rounded-full text-foreground border border-foreground hover:border-muted-foreground hover:text-muted-foreground transition-colors cursor-pointer"
+              >
+                <span>Upload profile picture</span>
+                <input
+                  id="profile-upload"
+                  type="file"
+                  className="sr-only"
+                  onChange={handleFileChange}
+                  accept="image/*"
+                />
+              </label>
             </div>
-            <div>
-              <label htmlFor="username">Username</label>
-              <Input
-                id="username"
-                defaultValue="thompson"
-                className="mt-1 py-3 rounded-sm placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-muted-foreground"
-              />
-            </div>
-            <div>
-              <label htmlFor="email">Email</label>
-              <Input
-                id="email"
-                type="email"
-                defaultValue="thompson.p@gmail.com"
-                className="mt-1 py-3 rounded-sm placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-muted-foreground"
-              />
-            </div>
-            <div>
-              <label htmlFor="bio">Bio (max 120 letters)</label>
-              <Textarea
-                id="bio"
-                defaultValue="I am a pet enthusiast and freelance writer who specializes in animal behavior and care. With a deep love for cats, I enjoy sharing insights on feline companionship and wellness.
 
-When I'm not writing, I spends time volunteering at my local animal shelter, helping cats find loving homes."
-                rows={10}
-                className="mt-1 py-3 rounded-sm placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-muted-foreground"
-              />
-            </div>
-          </form>
-        </div>
-      </main>
+            <form
+              className="space-y-7 max-w-2xl"
+              onSubmit={(e) => e.preventDefault()}
+            >
+              <div>
+                <label htmlFor="name">Name</label>
+                <Input
+                  id="name"
+                  name="name"
+                  value={profile.name}
+                  onChange={handleInputChange}
+                  className="mt-1 py-3 rounded-sm placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-muted-foreground"
+                />
+              </div>
+              <div>
+                <label htmlFor="username">Username</label>
+                <Input
+                  id="username"
+                  name="username"
+                  value={profile.username}
+                  onChange={handleInputChange}
+                  className="mt-1 py-3 rounded-sm placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-muted-foreground"
+                />
+              </div>
+              <div>
+                <label htmlFor="email">Email</label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  value={profile.email}
+                  disabled
+                  className="mt-1 py-3 rounded-sm placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-muted-foreground"
+                />
+              </div>
+            </form>
+          </div>
+        </main>
+      )}
     </div>
+  );
+}
+
+function ProfileSkeleton() {
+  return (
+    <main className="flex-1 p-8 bg-gray-50 overflow-auto">
+      <div className="flex justify-between items-center mb-6">
+        <Skeleton className="h-8 w-32 bg-[#EFEEEB]" />
+        <Skeleton className="h-10 w-24 bg-[#EFEEEB]" />
+      </div>
+
+      <div>
+        <div className="flex items-center mb-6">
+          <Skeleton className="w-24 h-24 rounded-full mr-4 bg-[#EFEEEB]" />
+          <Skeleton className="h-10 w-48 bg-[#EFEEEB]" />
+        </div>
+
+        <div className="space-y-7 max-w-2xl">
+          <div>
+            <Skeleton className="h-4 w-16 mb-2 bg-[#EFEEEB]" />
+            <Skeleton className="h-10 w-full bg-[#EFEEEB]" />
+          </div>
+          <div>
+            <Skeleton className="h-4 w-24 mb-2 bg-[#EFEEEB]" />
+            <Skeleton className="h-10 w-full bg-[#EFEEEB]" />
+          </div>
+          <div>
+            <Skeleton className="h-4 w-16 mb-2 bg-[#EFEEEB]" />
+            <Skeleton className="h-10 w-full bg-[#EFEEEB]" />
+          </div>
+        </div>
+      </div>
+    </main>
   );
 }

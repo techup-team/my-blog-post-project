@@ -1,5 +1,5 @@
 import {
-  Bell,
+  // Bell,
   FileText,
   FolderOpen,
   Key,
@@ -59,7 +59,8 @@ export function AdminSidebar() {
           <User className="mr-3 h-5 w-5" />
           Profile
         </Link>
-        <Link
+        {/* optional requirement */}
+        {/* <Link
           to="/admin/notification"
           className={`flex items-center px-4 py-2 ${
             isActive("/admin/notification")
@@ -69,7 +70,7 @@ export function AdminSidebar() {
         >
           <Bell className="mr-3 h-5 w-5" />
           Notification
-        </Link>
+        </Link> */}
         <Link
           to="/admin/reset-password"
           className={`flex items-center px-4 py-2 ${

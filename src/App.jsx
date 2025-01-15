@@ -13,10 +13,10 @@ import AdminCategoryManagementPage from "./page/admin/AdminCategoryPage";
 import AdminProfilePage from "./page/admin/AdminProfilePage";
 import AdminResetPasswordPage from "./page/admin/AdminResetPasswordPage";
 import AdminCreateArticlePage from "./page/admin/AdminCreateArticle";
-import AdminNotificationPage from "./page/admin/AdminNotificationPage";
 import AdminCreateCategoryPage from "./page/admin/AdminCreateCategoryPage";
 import AdminEditCategoryPage from "./page/admin/AdminEditCategoryPage";
 import AdminEditArticlePage from "./page/admin/AdminEditArticlePage";
+// import AdminNotificationPage from "./page/admin/AdminNotificationPage";
 import { useAuth } from "@/contexts/authentication"; // Import useAuth to check auth state
 import jwtInterceptor from "./utils/jwtIntercepter.js";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
@@ -189,7 +189,8 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route
+        {/* Optional Requirement */}
+        {/* <Route
           path="/admin/notification"
           element={
             <ProtectedRoute
@@ -201,7 +202,7 @@ function App() {
               <AdminNotificationPage />
             </ProtectedRoute>
           }
-        />
+        /> */}
         <Route
           path="/admin/reset-password"
           element={
