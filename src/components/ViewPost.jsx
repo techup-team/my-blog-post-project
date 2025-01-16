@@ -17,12 +17,12 @@ import {
   Loader2,
   X,
 } from "lucide-react";
-import { comments } from "@/data/comments";
 import { Textarea } from "@/components/ui/textarea";
 import authorImage from "../assets/author-image.jpeg";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/authentication";
 
 export default function ViewPost() {
   const [img, setImg] = useState("");
@@ -32,11 +32,14 @@ export default function ViewPost() {
   const [category, setCategory] = useState("");
   const [content, setContent] = useState("");
   const [likes, setLikes] = useState(0);
+  const [comments, setComments] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const param = useParams();
   const navigate = useNavigate();
+  const { state } = useAuth();
+  const user = state.user;
 
   useEffect(() => {
     getPost();
@@ -46,16 +49,23 @@ export default function ViewPost() {
   const getPost = async () => {
     setIsLoading(true);
     try {
-      const response = await axios.get(
+      const postsResponse = await axios.get(
         `https://blog-post-project-api-with-db.vercel.app/posts/${param.postId}`
       );
-      setImg(response.data.image);
-      setTitle(response.data.title);
-      setDate(response.data.date);
-      setDescription(response.data.description);
-      setCategory(response.data.category);
-      setContent(response.data.content);
-      setLikes(response.data.likes);
+      setImg(postsResponse.data.image);
+      setTitle(postsResponse.data.title);
+      setDate(postsResponse.data.date);
+      setDescription(postsResponse.data.description);
+      setCategory(postsResponse.data.category);
+      setContent(postsResponse.data.content);
+      const likesResponse = await axios.get(
+        `https://blog-post-project-api-with-db.vercel.app/posts/${param.postId}/likes`
+      );
+      setLikes(likesResponse.data.like_count);
+      const commentsResponse = await axios.get(
+        `https://blog-post-project-api-with-db.vercel.app/posts/${param.postId}/comments`
+      );
+      setComments(commentsResponse.data);
       setIsLoading(false);
     } catch (error) {
       console.log(error);
@@ -67,7 +77,6 @@ export default function ViewPost() {
   if (isLoading) {
     return <LoadingScreen />;
   }
-
   return (
     <div className="max-w-7xl mx-auto space-y-8 container md:px-8 pb-20 md:pb-28 md:pt-8 lg:pt-16">
       <div className="space-y-4 md:px-4">
@@ -103,8 +112,18 @@ export default function ViewPost() {
             <AuthorBio />
           </div>
 
-          <Share likesAmount={likes} setDialogState={setIsDialogOpen} />
-          <Comment setDialogState={setIsDialogOpen} />
+          <Share
+            likesAmount={likes}
+            setDialogState={setIsDialogOpen}
+            user={user}
+            setLikes={setLikes}
+          />
+          <Comment
+            setDialogState={setIsDialogOpen}
+            commentList={comments}
+            user={user}
+            setComments={setComments}
+          />
         </div>
 
         <div className="hidden xl:block xl:w-1/4">
@@ -121,14 +140,58 @@ export default function ViewPost() {
   );
 }
 
-function Share({ likesAmount, setDialogState }) {
+function Share({ likesAmount, setDialogState, user, setLikes }) {
   const shareLink = encodeURI(window.location.href);
+  const param = useParams();
+  const [isLiking, setIsLiking] = useState(false);
+
+  const handleLikeClick = async () => {
+    if (!user) {
+      return setDialogState(true);
+    }
+
+    setIsLiking(true);
+    try {
+      // First try to like the post
+      try {
+        await axios.post(
+          `https://blog-post-project-api-with-db.vercel.app/posts/${param.postId}/likes`
+        );
+      } catch (error) {
+        // If we get a 500 error, assume the post is already liked and try to unlike
+        if (error.response?.status === 500) {
+          await axios.delete(
+            `https://blog-post-project-api-with-db.vercel.app/posts/${param.postId}/likes`
+          );
+        } else {
+          // If it's a different error, throw it to be caught by the outer try-catch
+          throw error;
+        }
+      }
+
+      // After either liking or unliking, get the updated like count
+      const likesResponse = await axios.get(
+        `https://blog-post-project-api-with-db.vercel.app/posts/${param.postId}/likes`
+      );
+      setLikes(likesResponse.data.like_count);
+    } catch (error) {
+      console.error("Error handling like/unlike:", error);
+      // You might want to show an error message to the user here
+    } finally {
+      setIsLiking(false);
+    }
+  };
   return (
     <div className="md:px-4">
       <div className="bg-[#EFEEEB] py-4 px-4 md:rounded-sm flex flex-col space-y-4 md:gap-16 md:flex-row md:items-center md:space-y-0 md:justify-between mb-10">
         <button
-          onClick={() => setDialogState(true)}
-          className="bg-white flex items-center justify-center space-x-2 px-11 py-3 rounded-full text-foreground border border-foreground hover:border-muted-foreground hover:text-muted-foreground transition-colors group"
+          onClick={handleLikeClick}
+          disabled={isLiking}
+          className={`flex items-center justify-center space-x-2 px-11 py-3 rounded-full text-foreground border border-foreground transition-colors group ${
+            isLiking
+              ? "bg-gray-200 cursor-not-allowed text-gray-500 border-gray-300"
+              : "bg-white hover:border-muted-foreground hover:text-muted-foreground"
+          }`}
         >
           <SmilePlus className="w-5 h-5 text-foreground group-hover:text-muted-foreground transition-colors" />
           <span className="text-foreground group-hover:text-muted-foreground font-medium transition-colors">
@@ -190,18 +253,42 @@ function Share({ likesAmount, setDialogState }) {
   );
 }
 
-function Comment({ setDialogState }) {
-  const [comment, setComment] = useState("");
+function Comment({ setDialogState, commentList, setComments, user }) {
+  const [commentText, setCommentText] = useState("");
   const [isError, setIsError] = useState(false);
-  const handleSendComment = (e) => {
+  const param = useParams();
+  const handleSendComment = async (e) => {
     e.preventDefault();
-    if (!comment.trim()) {
+    if (!commentText.trim()) {
       setIsError(true);
     } else {
       // Submit the comment
       setIsError(false);
-      console.log("Comment submitted:", comment);
-      // Add the logic for what should happen after sending the comment
+      setCommentText("");
+      await axios.post(
+        `https://blog-post-project-api-with-db.vercel.app/posts/${param.postId}/comments`,
+        { comment: commentText }
+      );
+      const commentsResponse = await axios.get(
+        `https://blog-post-project-api-with-db.vercel.app/posts/${param.postId}/comments`
+      );
+      setComments(commentsResponse.data);
+      toast.custom((t) => (
+        <div className="bg-green-500 text-white p-4 rounded-sm flex justify-between items-start max-w-md w-full">
+          <div>
+            <h2 className="font-bold text-lg mb-1">Comment Posted!</h2>
+            <p className="text-sm">
+              Your comment has been successfully added to this post.
+            </p>
+          </div>
+          <button
+            onClick={() => toast.dismiss(t)}
+            className="text-white hover:text-gray-200"
+          >
+            <X size={20} />
+          </button>
+        </div>
+      ));
     }
   };
 
@@ -211,12 +298,14 @@ function Comment({ setDialogState }) {
         <h3 className="text-lg font-semibold">Comment</h3>
         <form className="space-y-2 relative" onSubmit={handleSendComment}>
           <Textarea
-            value={comment}
+            value={commentText}
             onFocus={() => {
               setIsError(false);
-              setDialogState(true);
+              if (!user) {
+                return setDialogState(true);
+              }
             }}
-            onChange={(e) => setComment(e.target.value)}
+            onChange={(e) => setCommentText(e.target.value)}
             placeholder="What are your thoughts?"
             className={`w-full p-4 h-24 resize-none py-3 rounded-sm placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-muted-foreground ${
               isError ? "border-red-500" : ""
@@ -238,12 +327,12 @@ function Comment({ setDialogState }) {
         </form>
       </div>
       <div className="space-y-6 px-4">
-        {comments.map((comment, index) => (
+        {commentList.map((comment, index) => (
           <div key={index} className="flex flex-col gap-2 mb-4">
             <div className="flex space-x-4">
               <div className="flex-shrink-0">
                 <img
-                  src={comment.image}
+                  src={comment.profile_pic}
                   alt={comment.name}
                   className="rounded-full w-12 h-12 object-cover"
                 />
@@ -251,12 +340,23 @@ function Comment({ setDialogState }) {
               <div className="flex-grow">
                 <div className="flex flex-col items-start justify-between">
                   <h4 className="font-semibold">{comment.name}</h4>
-                  <span className="text-sm text-gray-500">{comment.date}</span>
+                  <span className="text-sm text-gray-500">
+                    {new Date(comment.created_at)
+                      .toLocaleString("en-GB", {
+                        day: "2-digit",
+                        month: "long",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        hour12: false,
+                      })
+                      .replace(", ", " at ")}
+                  </span>
                 </div>
               </div>
             </div>
-            <p className=" text-gray-600">{comment.comment}</p>
-            {index < comments.length - 1 && (
+            <p className=" text-gray-600">{comment.comment_text}</p>
+            {index < commentList.length - 1 && (
               <hr className="border-gray-300 my-4" />
             )}
           </div>
